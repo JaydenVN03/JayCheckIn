@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { students, type AttendanceStatus, type Student } from '@/lib/students';
 import { formatDisplayDate } from '@/lib/attendance';
 
@@ -28,6 +28,7 @@ export default function AttendancePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isReady, setIsReady] = useState(false);
   const [storageMode, setStorageMode] = useState<'memory' | 'google-sheets'>('google-sheets');
+  const studentListRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     const updatePageSize = () => {
@@ -150,7 +151,7 @@ export default function AttendancePage() {
     return (
       <div
         key={student.id}
-        className="flex h-full flex-col justify-between rounded-2xl border border-slate-200 bg-white p-4 shadow-soft"
+        className="flex h-full flex-col justify-between rounded-2xl border border-slate-200 bg-white p-3 shadow-soft sm:p-4"
       >
         <div className="mb-3 flex items-center justify-between gap-3">
           <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
@@ -159,13 +160,13 @@ export default function AttendancePage() {
           <span className="text-xs text-slate-500">#{students.findIndex((item) => item.id === student.id) + 1}</span>
         </div>
 
-        <p className="mb-4 min-h-[48px] text-base font-semibold leading-6 text-slate-800">{student.fullName}</p>
+        <p className="mb-4 min-h-[48px] text-sm font-semibold leading-5 text-slate-800 sm:text-base sm:leading-6">{student.fullName}</p>
 
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
           {(['PRESENT', 'ABSENT'] as const).map((status) => {
             const active = selectedStatus === status;
             const buttonClasses = [
-              'flex min-h-[52px] items-center justify-center rounded-xl border text-sm font-semibold transition-all',
+              'flex min-h-[52px] items-center justify-center rounded-xl border text-xs font-semibold transition-all sm:text-sm',
               active
                 ? status === 'PRESENT'
                   ? 'border-emerald-500 bg-emerald-50 text-emerald-700 ring-2 ring-emerald-200'
@@ -215,22 +216,24 @@ export default function AttendancePage() {
           </div>
         </header>
 
-        <section className="mb-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-soft">
-            <p className="text-sm text-slate-500">Tổng số học viên</p>
-            <p className="mt-2 text-3xl font-bold text-slate-900">{students.length}</p>
-          </div>
-          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 shadow-soft">
-            <p className="text-sm text-emerald-700">Có mặt</p>
-            <p className="mt-2 text-3xl font-bold text-emerald-700">{presentCount}</p>
-          </div>
-          <div className="rounded-2xl border border-red-200 bg-red-50 p-4 shadow-soft">
-            <p className="text-sm text-red-700">Vắng</p>
-            <p className="mt-2 text-3xl font-bold text-red-700">{absentCount}</p>
-          </div>
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 shadow-soft">
-            <p className="text-sm text-amber-700">Chưa chọn</p>
-            <p className="mt-2 text-3xl font-bold text-amber-700">{unselectedCount}</p>
+        <section className="mb-6 rounded-2xl border border-slate-200 bg-white p-2 shadow-soft sm:p-4">
+          <div className="grid grid-cols-4 divide-x divide-slate-200">
+            <div className="min-w-0 px-1 text-center sm:px-3">
+              <p className="text-[10px] leading-4 text-slate-500 sm:text-sm">Tổng số học viên</p>
+              <p className="mt-1 text-xl font-bold text-slate-900 sm:mt-2 sm:text-3xl">{students.length}</p>
+            </div>
+            <div className="min-w-0 px-1 text-center sm:px-3">
+              <p className="text-[10px] leading-4 text-emerald-700 sm:text-sm">Có mặt</p>
+              <p className="mt-1 text-xl font-bold text-emerald-700 sm:mt-2 sm:text-3xl">{presentCount}</p>
+            </div>
+            <div className="min-w-0 px-1 text-center sm:px-3">
+              <p className="text-[10px] leading-4 text-red-700 sm:text-sm">Vắng</p>
+              <p className="mt-1 text-xl font-bold text-red-700 sm:mt-2 sm:text-3xl">{absentCount}</p>
+            </div>
+            <div className="min-w-0 px-1 text-center sm:px-3">
+              <p className="text-[10px] leading-4 text-amber-700 sm:text-sm">Chưa chọn</p>
+              <p className="mt-1 text-xl font-bold text-amber-700 sm:mt-2 sm:text-3xl">{unselectedCount}</p>
+            </div>
           </div>
         </section>
 
@@ -252,7 +255,7 @@ export default function AttendancePage() {
           </div>
         )}
 
-        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-2">
+        <section ref={studentListRef} className="scroll-mt-4 grid grid-cols-2 gap-3 sm:gap-4">
           {visibleStudents.map((student) => renderStudentCard(student))}
         </section>
 
@@ -261,7 +264,10 @@ export default function AttendancePage() {
             <button
               type="button"
               disabled={page === 1}
-              onClick={() => setPage((current) => Math.max(1, current - 1))}
+              onClick={() => {
+                setPage((current) => Math.max(1, current - 1));
+                studentListRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }}
               className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 font-medium text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
             >
               Trang trước
@@ -277,7 +283,10 @@ export default function AttendancePage() {
             <button
               type="button"
               disabled={page === totalPages}
-              onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
+              onClick={() => {
+                setPage((current) => Math.min(totalPages, current + 1));
+                studentListRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }}
               className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 font-medium text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
             >
               Trang sau
