@@ -6,6 +6,10 @@ import {
   callAttendanceBackend,
   type AttendanceRecord,
 } from '@/lib/google-apps-script';
+import {
+  getMemoryAttendance,
+  isMemoryAttendanceMode,
+} from '@/lib/attendance-memory-store';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,8 +22,19 @@ type TodayResponse = {
 
 export async function GET() {
   try {
-    const result = await callAttendanceBackend<TodayResponse>({ action: 'today' });
     const today = getVietnamToday();
+    const memoryMode = isMemoryAttendanceMode();
+    const result = memoryMode
+      ? (() => {
+          const saved = getMemoryAttendance(today);
+          return {
+            date: today,
+            saved: Boolean(saved),
+            attendance: saved?.attendance ?? [],
+            savedAt: saved?.savedAt,
+          };
+        })()
+      : await callAttendanceBackend<TodayResponse>({ action: 'today' });
 
     if (
       !result ||
@@ -63,6 +78,7 @@ export async function GET() {
       saved: result.saved,
       attendance: result.attendance ?? [],
       savedAt: result.savedAt,
+      storageMode: memoryMode ? 'memory' : 'google-sheets',
       students,
     });
   } catch (error) {

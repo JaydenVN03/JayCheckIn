@@ -6,6 +6,10 @@ import {
   callAttendanceBackend,
   type AttendanceRecord,
 } from '@/lib/google-apps-script';
+import {
+  isMemoryAttendanceMode,
+  saveMemoryAttendance,
+} from '@/lib/attendance-memory-store';
 
 export const dynamic = 'force-dynamic';
 
@@ -77,6 +81,23 @@ export async function POST(request: Request) {
   }
 
   try {
+    if (isMemoryAttendanceMode()) {
+      const result = saveMemoryAttendance(date, entries);
+      if (!result) {
+        return NextResponse.json(
+          { code: 'ATTENDANCE_ALREADY_SAVED', message: 'Ngày này đã được lưu.' },
+          { status: 409 },
+        );
+      }
+
+      return NextResponse.json({
+        code: 'SUCCESS',
+        message: 'Đã lưu tạm trong bộ nhớ của máy chủ.',
+        savedAt: result.savedAt,
+        storageMode: 'memory',
+      });
+    }
+
     const result = await callAttendanceBackend<{ savedAt?: unknown }>({
       action: 'save',
       date,

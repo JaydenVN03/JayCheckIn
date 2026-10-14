@@ -13,6 +13,7 @@ type AttendanceApiResponse = {
   date: string;
   saved: boolean;
   attendance?: AttendanceEntry[];
+  storageMode?: 'memory' | 'google-sheets';
   students: Student[];
 };
 
@@ -26,6 +27,7 @@ export default function AttendancePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isReady, setIsReady] = useState(false);
+  const [storageMode, setStorageMode] = useState<'memory' | 'google-sheets'>('google-sheets');
 
   useEffect(() => {
     const updatePageSize = () => {
@@ -49,12 +51,13 @@ export default function AttendancePage() {
 
         setDate(data.date);
         setSaved(data.saved);
+        setStorageMode(data.storageMode ?? 'google-sheets');
         const savedAttendance = new Map(
           (data.attendance ?? []).map(({ studentId, status }) => [studentId, status]),
         );
         const initialStatusMap = Object.fromEntries(data.students.map((student) => [
           student.id,
-          data.saved ? savedAttendance.get(student.id) ?? null : 'PRESENT',
+          data.saved ? savedAttendance.get(student.id) ?? null : 'ABSENT',
         ])) as Record<string, AttendanceStatus | null>;
         setStatusMap(initialStatusMap);
         setIsReady(true);
@@ -240,6 +243,12 @@ export default function AttendancePage() {
         {saved && (
           <div className="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
             Đã lưu — không thể chỉnh sửa.
+          </div>
+        )}
+
+        {storageMode === 'memory' && (
+          <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            Chế độ tạm thời: dữ liệu chỉ lưu trong bộ nhớ và sẽ mất khi khởi động lại máy chủ. Chưa ghi vào Google Sheets.
           </div>
         )}
 

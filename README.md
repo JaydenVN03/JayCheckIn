@@ -313,6 +313,8 @@ Apps Script kiểm tra token, ngày, toàn bộ ID/trạng thái học viên, kh
 
 `GOOGLE_SERVICE_ACCOUNT_EMAIL` và `GOOGLE_PRIVATE_KEY` chỉ dành cho phương án Google Sheets API trực tiếp; không dùng khi chạy Apps Script. Không điền các biến này trong `.env.example`.
 
+Để chạy UI tạm thời mà chưa kết nối Sheets, đặt `ATTENDANCE_STORAGE_MODE=memory` trong `.env.local` rồi khởi động lại Next.js. Chế độ này lưu trong bộ nhớ tiến trình, chỉ phục vụ thử UI và sẽ mất dữ liệu khi server khởi động lại; không dùng làm lưu trữ production. Muốn ghi Sheets, đặt `ATTENDANCE_STORAGE_MODE=google-sheets` cùng cấu hình Apps Script ở trên.
+
 ## 10. Tiêu chí nghiệm thu
 
 ### UI
